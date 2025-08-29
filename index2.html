@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/x-icon"
+    href="https://img.freepik.com/premium-vector/red-roses-icon_165488-3531.jpg?w=2000">
+  <title>Trái Tim Tan Chảy Thành Hoa</title>
+  <meta name="description" content="Nhung Fish">
+  <style>
+    body {
+      margin: 0;
+      background: black;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      flex-direction: column;
+      position: relative;
+    }
+
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    #pinkboard {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+    }
+
+    #pinkboard {
+      /* top: 50%;
+            left: 50%; */
+      z-index: 1;
+      display: block;
+      position: absolute;
+      transform: translate(-50%, -50%);
+      animation: heart 1.5s ease infinite
+    }
+
+    @keyframes heart {
+      0% {
+        transform: scale(1.4);
+      }
+
+      30% {
+        transform: scale(1.6);
+      }
+
+      60% {
+        transform: scale(1.5);
+      }
+
+      100% {
+        transform: scale(1.4);
+      }
+    }
+
+    .message {
+      color: pink;
+      font-size: 2rem;
+      font-weight: bold;
+      text-align: center;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      /* width: 600px;
+      height: 300px; */
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      transition: opacity 2s ease-in-out;
+      z-index: 2;
+    }
+
+    .message span {
+      white-space: nowrap;
+    }
+
+    .heart {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(5);
+      margin-top: 40px;
+      ;
+      width: 400px;
+      height: 400px;
+      background-color: rgba(255, 20, 147, 0.8);
+      aspect-ratio: 1;
+      clip-path:
+        shape(from 50% 89%,
+          line to 90% 50%,
+          arc to 50% 9% of 1%,
+          arc to 10% 50% of 1%);
+      animation: blink 1s infinite alternate;
+      transition: transform 2s ease-in-out, opacity 1.5s ease-in-out;
+    }
+
+    .button {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: pink;
+      color: black;
+      font-size: 1.5rem;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+      z-index: 3;
+    }
+
+    @keyframes blink {
+      0% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+
+      100% {
+        opacity: 0.7;
+        transform: translate(-50%, -50%) scale(1.1);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="heartCanvas"></canvas>
+  <div class="heart" id="heart"></div>
+  <div class="message" id="message">
+    <span>💖</span>
+    <span>Trái tim tan chảy thành hoa</span>
+    <span>Có người con gái trông hoa đợi người</span>
+    <span>🌸💖</span>
+  </div>
+  <button class="button" id="clickButton">Click vào tôi</button><canvas id="pinkboard">
+    <canvas id="pinkboard">
+    </canvas>
+  </canvas>
+  <script>
+    /*
+     * Settings
+     */
+    var settings = {
+      particles: {
+        length: 1500, // maximum amount of particles
+        duration: 2, // particle duration in sec
+        velocity: 135, // particle velocity in pixels/sec
+        effect: -0.35, // play with this for a nice effect
+        size: 14, // particle size in pixels
+      },
+    };
+
+    /*
+     * RequestAnimationFrame polyfill
+     */
+    (function () {
+      var b = 0;
+      var c = ["ms", "moz", "webkit", "o"];
+      for (var a = 0; a < c.length && !window.requestAnimationFrame; ++a) {
+        window.requestAnimationFrame = window[c[a] + "RequestAnimationFrame"];
+        window.cancelAnimationFrame = window[c[a] + "CancelAnimationFrame"] || window[c[a] + "CancelRequestAnimationFrame"]
+      }
+      if (!window.requestAnimationFrame) {
+        window.requestAnimationFrame = function (h, e) {
+          var d = new Date().getTime();
+          var f = Math.max(0, 16 - (d - b));
+          var g = window.setTimeout(function () {
+            h(d + f)
+          }, f);
+          b = d + f;
+          return g
+        }
+      }
+      if (!window.cancelAnimationFrame) {
+        window.cancelAnimationFrame = function (d) {
+          clearTimeout(d)
+        }
+      }
+    }());
+
+    /*
+     * Point class
+     */
+    var Point = (function () {
+      function Point(x, y) {
+        this.x = (typeof x !== 'undefined') ? x : 0;
+        this.y = (typeof y !== 'undefined') ? y : 0;
+      }
+      Point.prototype.clone = function () {
+        return new Point(this.x, this.y);
+      };
+      Point.prototype.length = function (length) {
+        if (typeof length == 'undefined')
+          return Math.sqrt(this.x * this.x + this.y * this.y);
+        this.normalize();
+        this.x *= length;
+        this.y *= length;
+        return this;
+      };
+      Point.prototype.normalize = function () {
+        var length = this.length();
+        this.x /= length;
+        this.y /= length;
+        return this;
+      };
+      return Point;
+    })();
+
+    /*
+     * Particle class
+     */
+    var Particle = (function () {
+      function Particle() {
+        this.position = new Point();
+        this.velocity = new Point();
+        this.acceleration = new Point();
+        this.age = 0;
+      }
+      Particle.prototype.initialize = function (x, y, dx, dy) {
+        this.position.x = x;
+        this.position.y = y;
+        this.velocity.x = dx;
+        this.velocity.y = dy;
+        this.acceleration.x = dx * settings.particles.effect;
+        this.acceleration.y = dy * settings.particles.effect;
+        this.age = 0;
+      };
+      Particle.prototype.update = function (deltaTime) {
+        this.position.x += this.velocity.x * deltaTime;
+        this.position.y += this.velocity.y * deltaTime;
+        this.velocity.x += this.acceleration.x * deltaTime;
+        this.velocity.y += this.acceleration.y * deltaTime;
+        this.age += deltaTime;
+      };
+      Particle.prototype.draw = function (context, image) {
+        function ease(t) {
+          return (--t) * t * t + 1;
+        }
+        var size = image.width * ease(this.age / settings.particles.duration);
+        context.globalAlpha = 1 - this.age / settings.particles.duration;
+        context.drawImage(image, this.position.x - size / 2, this.position.y - size / 2, size, size);
+      };
+      return Particle;
+    })();
+
+    /*
+     * ParticlePool class
+     */
+    var ParticlePool = (function () {
+      var particles,
+        firstActive = 0,
+        firstFree = 0,
+        duration = settings.particles.duration;
+
+      function ParticlePool(length) {
+        // create and populate particle pool
+        particles = new Array(length);
+        for (var i = 0; i < particles.length; i++)
+          particles[i] = new Particle();
+      }
+      ParticlePool.prototype.add = function (x, y, dx, dy) {
+        particles[firstFree].initialize(x, y, dx, dy);
+
+        // handle circular queue
+        firstFree++;
+        if (firstFree == particles.length) firstFree = 0;
+        if (firstActive == firstFree) firstActive++;
+        if (firstActive == particles.length) firstActive = 0;
+      };
+      ParticlePool.prototype.update = function (deltaTime) {
+        var i;
+
+        // update active particles
+        if (firstActive < firstFree) {
+          for (i = firstActive; i < firstFree; i++)
+            particles[i].update(deltaTime);
+        }
+        if (firstFree < firstActive) {
+          for (i = firstActive; i < particles.length; i++)
+            particles[i].update(deltaTime);
+          for (i = 0; i < firstFree; i++)
+            particles[i].update(deltaTime);
+        }
+
+        // remove inactive particles
+        while (particles[firstActive].age >= duration && firstActive != firstFree) {
+          firstActive++;
+          if (firstActive == particles.length) firstActive = 0;
+        }
+
+
+      };
+      ParticlePool.prototype.draw = function (context, image) {
+        // draw active particles
+        if (firstActive < firstFree) {
+          for (i = firstActive; i < firstFree; i++)
+            particles[i].draw(context, image);
+        }
+        if (firstFree < firstActive) {
+          for (i = firstActive; i < particles.length; i++)
+            particles[i].draw(context, image);
+          for (i = 0; i < firstFree; i++)
+            particles[i].draw(context, image);
+        }
+      };
+      return ParticlePool;
+    })();
+
+    /*
+     * Putting it all together
+     */
+    const renderPinkboard = (canvas) => {
+      var context = canvas.getContext('2d'),
+        particles = new ParticlePool(settings.particles.length),
+        particleRate = settings.particles.length / settings.particles.duration, // particles/sec
+        time;
+
+      // get point on heart with -PI <= t <= PI
+      function pointOnHeart(t) {
+        return new Point(
+          160 * Math.pow(Math.sin(t), 3),
+          130 * Math.cos(t) - 50 * Math.cos(2 * t) - 20 * Math.cos(3 * t) - 10 * Math.cos(4 * t) + 25
+        );
+      }
+
+      // creating the particle image using a dummy canvas
+      var image = (function () {
+        var canvas = document.createElement('canvas'),
+          context = canvas.getContext('2d');
+        canvas.width = settings.particles.size;
+        canvas.height = settings.particles.size;
+        // helper function to create the path
+        function to(t) {
+          var point = pointOnHeart(t);
+          point.x = settings.particles.size / 3 + point.x * settings.particles.size / 550;
+          point.y = settings.particles.size / 3 - point.y * settings.particles.size / 550;
+          return point;
+        }
+        // create the path
+        context.beginPath();
+        var t = -Math.PI;
+        var point = to(t);
+        context.moveTo(point.x, point.y);
+        while (t < Math.PI) {
+          t += 0.01; // baby steps!
+          point = to(t);
+          context.lineTo(point.x, point.y);
+        }
+        context.closePath();
+        // create the fill
+        context.fillStyle = '#ea80b0';
+        context.fill();
+        // create the image
+        var image = new Image();
+        image.src = canvas.toDataURL();
+        return image;
+      })();
+
+      // render that thing!
+      function render() {
+        // next animation frame
+        requestAnimationFrame(render);
+
+        // update time
+        var newTime = new Date().getTime() / 1000,
+          deltaTime = newTime - (time || newTime);
+        time = newTime;
+
+        // clear canvas
+        context.clearRect(0, 0, canvas.width, canvas.height);
+
+        // create new particles
+        var amount = particleRate * deltaTime;
+        for (var i = 0; i < amount; i++) {
+          var pos = pointOnHeart(Math.PI - 2 * Math.PI * Math.random());
+          var dir = pos.clone().length(settings.particles.velocity);
+          particles.add(canvas.width / 2 + pos.x, canvas.height / 2 - pos.y, dir.x, -dir.y);
+        }
+
+        // update and draw particles
+        particles.update(deltaTime);
+        particles.draw(context, image);
+      }
+
+      // handle (re-)sizing of the canvas
+      function onResize() {
+        canvas.width = canvas.clientWidth;
+        canvas.height = canvas.clientHeight;
+        fitMessageLines()
+      }
+      window.onresize = onResize;
+
+      // delay rendering bootstrap
+      setTimeout(function () {
+        onResize();
+        render();
+      }, 500);
+
+    }
+    const heartCanvas = document.getElementById("heartCanvas");
+    const pinkboard = document.getElementById("pinkboard");
+    const ctx = heartCanvas.getContext("2d");
+    const heart = document.getElementById("heart");
+    const message = document.getElementById("message");
+    const clickButton = document.getElementById("clickButton");
+    heartCanvas.width = window.innerWidth;
+    heartCanvas.height = window.innerHeight;
+    let flowers = [];
+    let melting = false;
+
+    function fitMessageLines() {
+      if (!message) return;
+      const containerWidth = message.clientWidth;
+      const spans = message.querySelectorAll('span');
+      spans.forEach(function (span) {
+        span.style.fontSize = '';
+        var computed = window.getComputedStyle(span);
+        var size = parseFloat(computed.fontSize);
+        var minSize = 10; // px
+        // Reduce size until it fits or we hit the minimum
+        while (span.scrollWidth > containerWidth && size > minSize) {
+          size -= 1;
+          span.style.fontSize = size + 'px';
+        }
+      });
+    }
+
+    function createFlowerParticles() {
+      for (let i = 0; i < 50; i++) {
+        flowers.push({
+          x: Math.random() * heartCanvas.width,
+          y: Math.random() * heartCanvas.height,
+          size: Math.random() * 6 + 2,
+          color: ["pink", "red", "yellow", "white"][Math.floor(Math.random() * 4)],
+          speedX: (Math.random() - 0.5) * 0.5,
+          speedY: Math.random() * -0.5 - 0.2
+        });
+      }
+    }
+
+    function drawFlowers() {
+      for (let i = 0; i < flowers.length; i++) {
+        let f = flowers[i];
+        ctx.fillStyle = f.color;
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, f.size, 0, Math.PI * 2);
+        ctx.fill();
+        f.x += f.speedX;
+        f.y += f.speedY;
+        if (f.y < -10) {
+          f.y = heartCanvas.height + 10;
+          f.x = Math.random() * heartCanvas.width;
+        }
+      }
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, heartCanvas.width, heartCanvas.height);
+      if (melting) drawFlowers();
+      requestAnimationFrame(animate);
+    }
+
+    clickButton.addEventListener("click", () => {
+      heart.style.opacity = "0";
+      heart.style.transform = "translate(-50%, -50%) scale(0)";
+      // Fade the heart smoothly without shrinking
+      renderPinkboard(pinkboard);
+      clickButton.style.display = "none";
+      setTimeout(() => {
+        // Keep heart in DOM; just leave it transparent
+        heart.style.display = "none";
+        message.style.opacity = "1";
+        fitMessageLines();
+        melting = true;
+        createFlowerParticles();
+      }, 1500);
+    });
+
+    animate();
+  </script>
+</body>
+
+</html>
